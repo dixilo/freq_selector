@@ -72,7 +72,7 @@ module data_store #(
     assign dm_din = din_buf_1;
     
     
-    blk_mem_gen_0 data_mem (
+    blk_mem_data data_mem (
       .clka(clk),    // input wire clka
       .ena(cm_w_valid),      // input wire ena
       .wea(cm_w_valid),      // input wire [0 : 0] wea
@@ -113,7 +113,7 @@ module data_store #(
     assign w_index = index_buf_1;
     assign cm_din = cm_dout + 1;
     
-    blk_mem_gen_1 counter_mem (
+    blk_mem_counter counter_mem (
       .clka(clk),    // input wire clka
       .ena(cm_w_valid),      // input wire ena
       .wea(cm_w_valid),      // input wire [0 : 0] wea
