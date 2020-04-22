@@ -1,3 +1,6 @@
+# Block memory for selector
+create_ip -name blk_mem_gen -vendor xilinx.com -library ip -version 8.4 -module_name bram_ring -dir c:/Users/kucmb/jsuzuki/fpga_projects/freq_selector/ip_repo/axi_sel_test_1.0/src
+set_property -dict [list CONFIG.Memory_Type {Simple_Dual_Port_RAM} CONFIG.Assume_Synchronous_Clk {true} CONFIG.Write_Width_A {14} CONFIG.Write_Depth_A {128} CONFIG.Read_Width_A {14} CONFIG.Operating_Mode_A {READ_FIRST} CONFIG.Write_Width_B {14} CONFIG.Read_Width_B {14} CONFIG.Operating_Mode_B {READ_FIRST} CONFIG.Enable_B {Use_ENB_Pin} CONFIG.Register_PortA_Output_of_Memory_Primitives {false} CONFIG.Register_PortB_Output_of_Memory_Primitives {true} CONFIG.Port_B_Clock {100} CONFIG.Port_B_Enable_Rate {100}] [get_ips blk_mem_gen_0]
 
 # Block memory for data
 create_ip -name blk_mem_gen -vendor xilinx.com -library ip -version 8.4 -module_name blk_mem_data -dir c:/Users/kucmb/jsuzuki/fpga_projects/freq_selector/data_transfer_test/data_transfer_test.srcs/sources_1/ip
