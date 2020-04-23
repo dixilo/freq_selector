@@ -31,6 +31,7 @@ module ring_rand_second(
     input rd_en,
     output ready,
     output [6:0] index,
+    output [6:0] count,
 
     // random access
     input [6:0] rand_rd_addr,
@@ -71,25 +72,14 @@ module ring_rand_second(
     reg [3:0] buf_cnt;
     reg [3:0] buf_state;
     wire buf_next;
-    
+
+    assign count = ring_counter;
+
     // indexing
     wire [6:0] read_counter_1;
     wire [6:0] read_counter_2;
     wire [6:0] read_counter_3;
-    
-    
-//    blk_mem_gen_0 fifo_bram (
-//        .clka(clk),    // input wire clka
-//        .ena(bram_wr_en),      // input wire ena
-//        .wea(bram_wr_en),      // input wire [0 : 0] wea
-//        .addra(bram_wr_addr),  // input wire [6 : 0] addra
-//        .dina(bram_din),    // input wire [13 : 0] dina
-//        .clkb(clk),    // input wire clkb
-//        .enb(bram_rd_en),      // input wire enb
-//        .addrb(bram_rd_addr),  // input wire [6 : 0] addrb
-//        .doutb(bram_dout)  // output wire [13 : 0] doutb
-//    );
-    
+
     bram_ring_second brs_inst (
       .clka(clk),
       .ena(bram_wr_en),
@@ -271,6 +261,5 @@ module ring_rand_second(
     assign read_counter_2 = (read_counter_1 == 0)?(ring_counter - 1):(read_counter_1 - 1);
     assign read_counter_3 = (read_counter_2 == 0)?(ring_counter - 1):(read_counter_2 - 1);
     assign index = read_counter_3;
-    // assign index = (read_counter < 3)? (ring_counter + read_counter - 3): (read_counter - 3);
 
 endmodule

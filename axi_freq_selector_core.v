@@ -10,7 +10,8 @@
         // Users to add ports here
         input wire dev_clk,
         input wire dev_rst,
-        input wire rd_en_ring,
+        input wire rd_en_first,
+        input wire rd_en_second,
         output wire [13:0] dout_mon,
         // User ports ends
 
@@ -61,8 +62,8 @@
     localparam integer OPT_MEM_ADDR_BITS = 2;
 
     reg [C_S_AXI_DATA_WIDTH-1:0]    slv_reg0; // Used to fill the ring buffer for frequency selectors
-    reg [C_S_AXI_DATA_WIDTH-1:0]    slv_reg1;
-    //reg [C_S_AXI_DATA_WIDTH-1:0]    slv_reg2;
+    reg [C_S_AXI_DATA_WIDTH-1:0]    slv_reg1; // Address for random access to the blockram in the ring buffer
+    // reg2 does not exist
     reg [C_S_AXI_DATA_WIDTH-1:0]    slv_reg3;
     reg [C_S_AXI_DATA_WIDTH-1:0]    slv_reg4;
     reg [C_S_AXI_DATA_WIDTH-1:0]    slv_reg5;
@@ -73,11 +74,13 @@
     reg [C_S_AXI_DATA_WIDTH-1:0]    reg_data_out;
     integer                         byte_index;
 
-    // Specific signals
+    ////////////////////////////////////////////// User signals
     reg                             aw_en_org;  // Original aw_en that appears in the template
     wire                            aw_en;      // Expanded aw_en that waits user_wbusy deasserted
     wire                            user_wbusy;
     wire                            user_rbusy;
+    wire                            ring_count;
+    reg [13:0]                      rr_data_buf; // Used in bram random access logic
 
     //////////////////////////////////////////////// AXI logics
     assign S_AXI_AWREADY    = axi_awready;
@@ -146,8 +149,6 @@
         if ( S_AXI_ARESETN == 1'b0 ) begin
             slv_reg0 <= 0;
             slv_reg1 <= 0;
-            //slv_reg2 <= 0;
-            slv_reg3 <= 0;
             slv_reg4 <= 0;
             slv_reg5 <= 0;
             slv_reg6 <= 0;
@@ -163,14 +164,6 @@
                     for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
                         if ( S_AXI_WSTRB[byte_index] == 1 )
                             slv_reg1[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
-//                3'h2:
-//                    for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
-//                        if ( S_AXI_WSTRB[byte_index] == 1 )
-//                            slv_reg2[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
-                3'h3:
-                    for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
-                        if ( S_AXI_WSTRB[byte_index] == 1 )
-                            slv_reg3[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
                 3'h4:
                     for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
                         if ( S_AXI_WSTRB[byte_index] == 1 )
@@ -190,8 +183,6 @@
                 default : begin
                     slv_reg0 <= slv_reg0;
                     slv_reg1 <= slv_reg1;
-                    //slv_reg2 <= slv_reg2;
-                    slv_reg3 <= slv_reg3;
                     slv_reg4 <= slv_reg4;
                     slv_reg5 <= slv_reg5;
                     slv_reg6 <= slv_reg6;
@@ -255,7 +246,7 @@
             3'h0   : reg_data_out <= slv_reg0;
             3'h1   : reg_data_out <= slv_reg1;
             3'h2   : reg_data_out <= rr_data_buf;
-            3'h3   : reg_data_out <= slv_reg3;
+            3'h3   : reg_data_out <= ring_count;
             3'h4   : reg_data_out <= slv_reg4;
             3'h5   : reg_data_out <= slv_reg5;
             3'h6   : reg_data_out <= slv_reg6;
@@ -274,11 +265,14 @@
     end
 
     /////////////////////////////////////////////////////////////////// User logic
-    wire [13:0] din_ring;
-    wire [13:0] dout_ring;
+    wire [13:0] din_first;
+    wire [3:0]  din_second;
+    wire [13:0] dout_first;
+    wire [13:0] dout_second;
     wire wr_en_ring;
     wire ready_ring;
-    wire [6:0] index_ring;
+    wire [6:0] index_first;
+    wire [6:0] index_second;
     wire [6:0] rand_rd_addr;
     wire rand_rd_en;
     wire rand_rd_valid;
@@ -337,7 +331,8 @@
 
     assign iw_pos_edge = (iw_buf_0 == 1'b1) & (iw_buf_1 == 1'b0);
     assign wr_en_ring = iw_pos_edge;
-    assign din_ring = slv_reg0;
+    assign din_first    = slv_reg0[13:0];
+    assign din_second   = slv_reg0[19:16]
 
     //////////// reg1: random access address
     wire rr_addr_written = (wch == 1) & axi_bvalid;
@@ -346,7 +341,6 @@
     reg rr_busy_reg;
     reg [6:0] rr_addr_buf;
     reg [2:0] rr_counter;
-    reg [13:0] rr_data_buf;
 
     // random read busy
     always @(posedge S_AXI_ACLK) begin
@@ -393,7 +387,7 @@
             rr_data_buf <= 14'b0;
         end else begin
             if (rr_counter == 3'd4) begin
-                rr_data_buf <= dout_ring;
+                rr_data_buf <= {dout_second, 2'b0, dout_first};
             end
         end
     end
@@ -401,25 +395,40 @@
     assign rand_rd_en = (rr_counter == 3'd1);
 
     //////////// reg2: random access data (read only)
+    // Read access to BASE_ADDR + 0x08 
 
     //////////// reg3: number of data in the ring buffer (read only)
+    // Read access to BASE_ADDR + 0x0C
 
     //////////// reg4: status
 
 
-    ring_rand ring_freq(
+    ring_rand ring_first(
         .clk(dev_clk),
         .rst(dev_rst),
-        .din(din_ring),
+        .din(din_first),
         .wr_en(wr_en_ring),
-        .dout(dout_ring),
-        .rd_en(rd_en_ring),
+        .dout(dout_first),
+        .rd_en(rd_en_first),
         .ready(ready_ring),
-        .index(index_ring),
+        .index(index_first),
+        .count(ring_count)
         // random access
         .rand_rd_addr(rand_rd_addr),
         .rand_rd_en(rand_rd_en),
         .rand_rd_valid(rand_rd_valid)
+    );
+
+    ring_rand_second ring_second(
+        .clk(dev_clk),
+        .rst(dev_rst),
+        .din(din_second),
+        .wr_en(wr_en_ring),
+        .dout(dout_second),
+        .rd_en(rd_en_second),
+        .index(index_second),
+        .rand_rd_addr(rand_rd_addr),
+        .rand_rd_en(rand_rd_en)
     );
 
     // User logic ends

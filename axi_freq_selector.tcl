@@ -26,8 +26,15 @@ set_property CONFIG.Write_Width_A 14 [get_ips bram_ring]
 set_property CONFIG.Write_Depth_A 128 [get_ips bram_ring]
 set_property CONFIG.Read_Width_A 14 [get_ips bram_ring]
 set_property CONFIG.Operating_Mode_A "READ_FIRST" [get_ips bram_ring]
-#set_property CONFIG.Port_B_Clock 250 [get_ips bram_ring]
-#set_property CONFIG.Port_B_Enable_Rate 250 [get_ips bram_ring]
+
+create_ip -vlnv [latest_ip blk_mem_gen] -module_name bram_ring_second
+set_property CONFIG.Memory_Type "Simple_Dual_Port_RAM" [get_ips bram_ring_second]
+set_property CONFIG.Assume_Synchronous_Clk "true" [get_ips bram_ring_second]
+set_property CONFIG.Write_Width_A 4 [get_ips bram_ring_second]
+set_property CONFIG.Write_Depth_A 128 [get_ips bram_ring_second]
+set_property CONFIG.Read_Width_A 4 [get_ips bram_ring_second]
+set_property CONFIG.Operating_Mode_A "READ_FIRST" [get_ips bram_ring_second]
+
 
 # file groups
 ipx::add_file ./axi_freq_selector.srcs/sources_1/ip/bram_ring/bram_ring.xci \
