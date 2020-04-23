@@ -1,7 +1,7 @@
 
 `timescale 1 ns / 1 ps
 
-    module axi_freq_selectore_core #
+    module axi_freq_selector_core #
     (
         parameter integer C_S_AXI_DATA_WIDTH	= 32,
         parameter integer C_S_AXI_ADDR_WIDTH	= 5
@@ -363,13 +363,13 @@
     assign rr_busy = rr_addr_written | rr_busy_reg;
 
     // random read stage
-    assign rr_fin = (rr_counter == 3'd4);
+    assign rr_fin = (rr_counter == 3'd5);
     always @(posedge dev_clk) begin
         if (dev_rst) begin
             rr_counter <= 3'b0;
         end else begin
             if (rr_busy_reg) begin
-                if (rr_counter != 3'd4)
+                if (rr_counter != 3'd5)
                     rr_counter <= rr_counter + 3'b1;
                 else
                     rr_counter <= rr_counter;
@@ -392,13 +392,13 @@
         if (dev_rst) begin
             rr_data_buf <= 14'b0;
         end else begin
-            if (rr_counter == 3'd3) begin
+            if (rr_counter == 3'd4) begin
                 rr_data_buf <= dout_ring;
             end
         end
     end
 
-    assign rand_rd_en = (rr_counter == 3'd1) | (rr_counter == 3'd2) | (rr_counter == 3'd3);
+    assign rand_rd_en = (rr_counter == 3'd1);
 
     //////////// reg2: random access data (read only)
 

@@ -10,7 +10,7 @@
         input wire dev_clk,
         input wire dev_rst,
         input wire rd_en_ring,
-        output wire [13:0] dout_ring,
+        output wire [13:0] dout_mon,
 
 		// Ports of Axi Slave Bus Interface S00_AXI
 		input wire  s00_axi_aclk,
@@ -43,7 +43,7 @@
 	    .dev_clk(dev_clk),
         .dev_rst(dev_rst),
         .rd_en_ring(rd_en_ring),
-        .dout_ring(dout_ring),
+        .dout_mon(dout_mon),
 
 		.S_AXI_ACLK(s00_axi_aclk),
 		.S_AXI_ARESETN(s00_axi_aresetn),

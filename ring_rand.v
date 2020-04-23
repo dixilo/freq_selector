@@ -72,7 +72,7 @@ module ring_rand(
     reg [3:0] buf_state;
     wire buf_next;
     
-    blk_mem_gen_0 fifo_bram (
+    bram_ring fifo_bram (
         .clka(clk),    // input wire clka
         .ena(bram_wr_en),      // input wire ena
         .wea(bram_wr_en),      // input wire [0 : 0] wea
