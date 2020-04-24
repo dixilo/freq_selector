@@ -31,7 +31,7 @@ module ring_rand_second(
     input rd_en,
     output ready,
     output [6:0] index,
-    output [6:0] count,
+    output [7:0] count,
 
     // random access
     input [6:0] rand_rd_addr,

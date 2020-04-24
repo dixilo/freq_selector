@@ -9,8 +9,9 @@
 	(
         input wire dev_clk,
         input wire dev_rst,
-        input wire rd_en_ring,
-        output wire [13:0] dout_mon,
+        input wire rd_en_first,
+		input wire rd_en_second,
+        output wire [31:0] dout_mon,
 
 		// Ports of Axi Slave Bus Interface S00_AXI
 		input wire  s00_axi_aclk,
@@ -42,7 +43,8 @@
 	) axi_freq_selector_core_inst (
 	    .dev_clk(dev_clk),
         .dev_rst(dev_rst),
-        .rd_en_ring(rd_en_ring),
+        .rd_en_first(rd_en_first),
+		.rd_en_second(rd_en_second),
         .dout_mon(dout_mon),
 
 		.S_AXI_ACLK(s00_axi_aclk),

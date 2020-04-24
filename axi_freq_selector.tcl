@@ -9,6 +9,7 @@ add_files -norecurse -scan_for_includes -fileset $proj_fileset [list \
 "axi_freq_selector.v" \
 "axi_freq_selector_core.v" \
 "ring_rand.v" \
+"ring_rand_second.v" \
 ]
 
 set_property "top" "axi_freq_selector" $proj_fileset
@@ -38,6 +39,8 @@ set_property CONFIG.Operating_Mode_A "READ_FIRST" [get_ips bram_ring_second]
 
 # file groups
 ipx::add_file ./axi_freq_selector.srcs/sources_1/ip/bram_ring/bram_ring.xci \
+[ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
+ipx::add_file ./axi_freq_selector.srcs/sources_1/ip/bram_ring_second/bram_ring_second.xci \
 [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
 
 ipx::reorder_files -before ../axi_freq_selector_core.v \

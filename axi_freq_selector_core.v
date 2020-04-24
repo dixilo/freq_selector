@@ -12,7 +12,7 @@
         input wire dev_rst,
         input wire rd_en_first,
         input wire rd_en_second,
-        output wire [13:0] dout_mon,
+        output wire [31:0] dout_mon,
         // User ports ends
 
         // Global Clock Signal
@@ -79,8 +79,10 @@
     wire                            aw_en;      // Expanded aw_en that waits user_wbusy deasserted
     wire                            user_wbusy;
     wire                            user_rbusy;
-    wire                            ring_count;
-    reg [13:0]                      rr_data_buf; // Used in bram random access logic
+    wire [7:0]                      ring_count;
+    reg [31:0]                      rr_data_buf; // Used in bram random access logic
+
+    assign dout_mon = {dout_second, 2'b00, dout_first};
 
     //////////////////////////////////////////////// AXI logics
     assign S_AXI_AWREADY    = axi_awready;
@@ -268,7 +270,7 @@
     wire [13:0] din_first;
     wire [3:0]  din_second;
     wire [13:0] dout_first;
-    wire [13:0] dout_second;
+    wire [3:0] dout_second;
     wire wr_en_ring;
     wire ready_ring;
     wire [6:0] index_first;
@@ -279,6 +281,8 @@
 
     wire index_busy;	
     reg index_busy_reg; // S_AXI_ACLK
+    wire rr_busy;
+    reg rr_busy_reg;
 
     wire [OPT_MEM_ADDR_BITS:0] wch = axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB];
     //////////// reg0: index register
@@ -332,13 +336,13 @@
     assign iw_pos_edge = (iw_buf_0 == 1'b1) & (iw_buf_1 == 1'b0);
     assign wr_en_ring = iw_pos_edge;
     assign din_first    = slv_reg0[13:0];
-    assign din_second   = slv_reg0[19:16]
+    assign din_second   = slv_reg0[19:16];
 
     //////////// reg1: random access address
     wire rr_addr_written = (wch == 1) & axi_bvalid;
     wire rr_fin;
-    wire rr_busy;
-    reg rr_busy_reg;
+    
+    
     reg [6:0] rr_addr_buf;
     reg [2:0] rr_counter;
 
@@ -384,7 +388,7 @@
 
     always @(posedge dev_clk) begin
         if (dev_rst) begin
-            rr_data_buf <= 14'b0;
+            rr_data_buf <= 32'b0;
         end else begin
             if (rr_counter == 3'd4) begin
                 rr_data_buf <= {dout_second, 2'b0, dout_first};
@@ -412,7 +416,7 @@
         .rd_en(rd_en_first),
         .ready(ready_ring),
         .index(index_first),
-        .count(ring_count)
+        .count(ring_count),
         // random access
         .rand_rd_addr(rand_rd_addr),
         .rand_rd_en(rand_rd_en),

@@ -31,7 +31,7 @@ module ring_rand(
     input rd_en,
     output ready,
     output [6:0] index,
-    output [6:0] count,
+    output [7:0] count,
 
     // random access
     input [6:0] rand_rd_addr,
@@ -74,6 +74,11 @@ module ring_rand(
     wire buf_next;
 
     assign count = ring_counter;
+
+    // indexing
+    wire [6:0] read_counter_1;
+    wire [6:0] read_counter_2;
+    wire [6:0] read_counter_3;
 
     bram_ring fifo_bram (
         .clka(clk),    // input wire clka
