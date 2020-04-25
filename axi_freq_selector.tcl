@@ -18,7 +18,7 @@ ipx::package_project -root_dir "./ip_test" -vendor kuhep -library user -taxonomy
 set_property name $ip_name [ipx::current_core]
 set_property vendor_display_name {kuhep} [ipx::current_core]
 
-
+################################################ IP generation
 # Block memory for the first frequency selector
 create_ip -vlnv [latest_ip blk_mem_gen] -module_name bram_ring
 set_property CONFIG.Memory_Type "Simple_Dual_Port_RAM" [get_ips bram_ring]
@@ -36,7 +36,7 @@ set_property CONFIG.Write_Depth_A 128 [get_ips bram_ring_second]
 set_property CONFIG.Read_Width_A 4 [get_ips bram_ring_second]
 set_property CONFIG.Operating_Mode_A "READ_FIRST" [get_ips bram_ring_second]
 
-
+################################################ Register XCI files
 # file groups
 ipx::add_file ./axi_freq_selector.srcs/sources_1/ip/bram_ring/bram_ring.xci \
 [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]

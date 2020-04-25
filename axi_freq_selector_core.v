@@ -12,6 +12,11 @@
         input wire dev_rst,
         input wire rd_en_first,
         input wire rd_en_second,
+        output wire [6:0] index_first,
+        output wire [13:0] freq_first,
+        output wire [6:0] index_second,
+        output wire [3:0] freq_second,
+
         output wire [31:0] dout_mon,
         // User ports ends
 
@@ -64,8 +69,8 @@
     reg [C_S_AXI_DATA_WIDTH-1:0]    slv_reg0; // Used to fill the ring buffer for frequency selectors
     reg [C_S_AXI_DATA_WIDTH-1:0]    slv_reg1; // Address for random access to the blockram in the ring buffer
     // reg2 does not exist
-    reg [C_S_AXI_DATA_WIDTH-1:0]    slv_reg3;
-    reg [C_S_AXI_DATA_WIDTH-1:0]    slv_reg4;
+    // reg3 does not exist
+    // reg4 does not exist
     reg [C_S_AXI_DATA_WIDTH-1:0]    slv_reg5;
     reg [C_S_AXI_DATA_WIDTH-1:0]    slv_reg6;
     reg [C_S_AXI_DATA_WIDTH-1:0]    slv_reg7;
@@ -81,8 +86,13 @@
     wire                            user_rbusy;
     wire [7:0]                      ring_count;
     reg [31:0]                      rr_data_buf; // Used in bram random access logic
+    wire [31:0]                     user_status;
+    reg                             soft_reset;
 
+    /////////////// status registers
+    reg                             bypass_second;
     assign dout_mon = {dout_second, 2'b00, dout_first};
+    assign user_status = {30'b0, bypass_second, 1'b0};
 
     //////////////////////////////////////////////// AXI logics
     assign S_AXI_AWREADY    = axi_awready;
@@ -151,7 +161,8 @@
         if ( S_AXI_ARESETN == 1'b0 ) begin
             slv_reg0 <= 0;
             slv_reg1 <= 0;
-            slv_reg4 <= 0;
+            bypass_second <= 0;
+            soft_reset <= 0;
             slv_reg5 <= 0;
             slv_reg6 <= 0;
             slv_reg7 <= 0;
@@ -167,9 +178,13 @@
                         if ( S_AXI_WSTRB[byte_index] == 1 )
                             slv_reg1[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
                 3'h4:
-                    for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
-                        if ( S_AXI_WSTRB[byte_index] == 1 )
-                            slv_reg4[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
+                    if ( S_AXI_WSTRB[0] == 1) begin // first 8 bits
+                        if ( S_AXI_WDATA[0] == 1 ) begin // software reset
+                            soft_reset <= 1;
+                        end else begin
+                            bypass_second <= S_AXI_WDATA[1];
+                        end
+                    end
                 3'h5:
                     for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
                         if ( S_AXI_WSTRB[byte_index] == 1 )
@@ -185,12 +200,15 @@
                 default : begin
                     slv_reg0 <= slv_reg0;
                     slv_reg1 <= slv_reg1;
-                    slv_reg4 <= slv_reg4;
+                    bypass_second <= bypass_second;
+                    soft_reset <= 0;
                     slv_reg5 <= slv_reg5;
                     slv_reg6 <= slv_reg6;
                     slv_reg7 <= slv_reg7;
                 end
                 endcase
+            end else begin
+                soft_reset <= 0;
             end
         end
     end
@@ -249,7 +267,7 @@
             3'h1   : reg_data_out <= slv_reg1;
             3'h2   : reg_data_out <= rr_data_buf;
             3'h3   : reg_data_out <= ring_count;
-            3'h4   : reg_data_out <= slv_reg4;
+            3'h4   : reg_data_out <= user_status;
             3'h5   : reg_data_out <= slv_reg5;
             3'h6   : reg_data_out <= slv_reg6;
             3'h7   : reg_data_out <= slv_reg7;
@@ -273,8 +291,6 @@
     wire [3:0] dout_second;
     wire wr_en_ring;
     wire ready_ring;
-    wire [6:0] index_first;
-    wire [6:0] index_second;
     wire [6:0] rand_rd_addr;
     wire rand_rd_en;
     wire rand_rd_valid;
@@ -283,6 +299,8 @@
     reg index_busy_reg; // S_AXI_ACLK
     wire rr_busy;
     reg rr_busy_reg;
+    wire soft_reset_dev;
+    reg [3:0] sr_count;
 
     wire [OPT_MEM_ADDR_BITS:0] wch = axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB];
     //////////// reg0: index register
@@ -405,11 +423,23 @@
     // Read access to BASE_ADDR + 0x0C
 
     //////////// reg4: status
-
+    // software reset of ring buffers
+    always @(posedge dev_clk) begin
+        if (dev_rst) begin
+            sr_count <= 4'b0;
+        end else begin
+            if (soft_reset) begin
+                sr_count <= 1;
+            end else if (sr_count != 4'b0) begin
+                sr_count <= sr_count + 1;
+            end
+        end
+    end
+    assign soft_reset_dev = (sr_count != 4'b0);
 
     ring_rand ring_first(
         .clk(dev_clk),
-        .rst(dev_rst),
+        .rst(dev_rst | soft_reset_dev),
         .din(din_first),
         .wr_en(wr_en_ring),
         .dout(dout_first),
@@ -425,7 +455,7 @@
 
     ring_rand_second ring_second(
         .clk(dev_clk),
-        .rst(dev_rst),
+        .rst(dev_rst | soft_reset_dev),
         .din(din_second),
         .wr_en(wr_en_ring),
         .dout(dout_second),
@@ -434,6 +464,9 @@
         .rand_rd_addr(rand_rd_addr),
         .rand_rd_en(rand_rd_en)
     );
+
+    assign freq_first = dout_first;
+    assign freq_second = dout_second;
 
     // User logic ends
 
