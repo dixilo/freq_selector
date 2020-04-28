@@ -92,7 +92,7 @@
     /////////////// status registers
     reg                             bypass_second;
     assign dout_mon = {dout_second, 2'b00, dout_first};
-    assign user_status = {30'b0, bypass_second, 1'b0};
+    
 
     //////////////////////////////////////////////// AXI logics
     assign S_AXI_AWREADY    = axi_awready;
@@ -300,7 +300,7 @@
     wire rr_busy;
     reg rr_busy_reg;
     wire soft_reset_dev;
-    reg [3:0] sr_count;
+    wire sr_busy;
 
     wire [OPT_MEM_ADDR_BITS:0] wch = axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB];
     //////////// reg0: index register
@@ -311,8 +311,8 @@
     reg iw_buf_1;
     reg iw_fin;
     
-    assign user_wbusy = index_busy | rr_busy;
-    assign user_rbusy = index_busy | rr_busy;
+    assign user_wbusy = index_busy | rr_busy | sr_busy;
+    assign user_rbusy = index_busy | rr_busy | sr_busy;
     
     always @(posedge S_AXI_ACLK) begin
        if ( S_AXI_ARESETN == 1'b0 ) begin
@@ -424,18 +424,42 @@
 
     //////////// reg4: status
     // software reset of ring buffers
-    always @(posedge dev_clk) begin
-        if (dev_rst) begin
-            sr_count <= 4'b0;
+    reg sr_busy_reg;
+    wire sr_dev_edge;
+    wire sr_fin;
+    reg sr_dev_buf_0;
+    reg sr_dev_buf_1;
+    assign sr_busy = soft_reset | sr_busy_reg;
+
+    always @(posedge S_AXI_ACLK) begin
+        if ( S_AXI_ARESETN == 1'b0 ) begin
+            sr_busy_reg <= 0;
         end else begin
             if (soft_reset) begin
-                sr_count <= 1;
-            end else if (sr_count != 4'b0) begin
-                sr_count <= sr_count + 1;
+                sr_busy_reg <= 1;
+            end else if (sr_fin) begin
+                sr_busy_reg <= 0;
             end
         end
     end
-    assign soft_reset_dev = (sr_count != 4'b0);
+
+    always @(posedge dev_clk) begin
+        if (dev_rst) begin
+            sr_dev_buf_0 <= 0;
+            sr_dev_buf_1 <= 0;
+        end else begin
+            sr_dev_buf_0 <= sr_busy;
+            sr_dev_buf_1 <= sr_dev_buf_0;
+        end
+    end
+
+    assign sr_dev_edge = (sr_dev_buf_0 == 1) && (sr_dev_buf_1 == 0);
+    assign sr_fin = (sr_dev_buf_1 == 1);
+
+    assign soft_reset_dev = sr_dev_edge;
+
+    assign user_status = {29'b0, ready_ring, bypass_second, 1'b0};
+
 
     ring_rand ring_first(
         .clk(dev_clk),
