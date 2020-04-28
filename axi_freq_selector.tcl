@@ -10,6 +10,9 @@ add_files -norecurse -scan_for_includes -fileset $proj_fileset [list \
 "axi_freq_selector_core.v" \
 "ring_rand.v" \
 "ring_rand_second.v" \
+"data_store.v" \
+"data_transfer.v" \
+"second_fft.v" \
 ]
 
 set_property "top" "axi_freq_selector" $proj_fileset
@@ -28,6 +31,7 @@ set_property CONFIG.Write_Depth_A 128 [get_ips bram_ring]
 set_property CONFIG.Read_Width_A 14 [get_ips bram_ring]
 set_property CONFIG.Operating_Mode_A "READ_FIRST" [get_ips bram_ring]
 
+# Block memory for the second frequency selector
 create_ip -vlnv [latest_ip blk_mem_gen] -module_name bram_ring_second
 set_property CONFIG.Memory_Type "Simple_Dual_Port_RAM" [get_ips bram_ring_second]
 set_property CONFIG.Assume_Synchronous_Clk "true" [get_ips bram_ring_second]
@@ -35,6 +39,60 @@ set_property CONFIG.Write_Width_A 4 [get_ips bram_ring_second]
 set_property CONFIG.Write_Depth_A 128 [get_ips bram_ring_second]
 set_property CONFIG.Read_Width_A 4 [get_ips bram_ring_second]
 set_property CONFIG.Operating_Mode_A "READ_FIRST" [get_ips bram_ring_second]
+
+# Block memory for the temporal data storage
+create_ip -vlnv [latest_ip blk_mem_gen] -module_name blk_mem_data
+set_property CONFIG.Memory_Type "Simple_Dual_Port_RAM" [get_ips blk_mem_data]
+set_property CONFIG.Assume_Synchronous_Clk "true" [get_ips blk_mem_data]
+set_property CONFIG.Write_Width_A 64 [get_ips blk_mem_data]
+set_property CONFIG.Write_Depth_A 4096 [get_ips blk_mem_data]
+set_property CONFIG.Read_Width_A 64 [get_ips blk_mem_data]
+set_property CONFIG.Operating_Mode_A "READ_FIRST" [get_ips blk_mem_data]
+
+# Block memory for the counter
+create_ip -vlnv [latest_ip blk_mem_gen] -module_name blk_mem_counter
+set_property CONFIG.Memory_Type "Simple_Dual_Port_RAM" [get_ips blk_mem_counter]
+set_property CONFIG.Assume_Synchronous_Clk "true" [get_ips blk_mem_counter]
+set_property CONFIG.Write_Width_A 5 [get_ips blk_mem_counter]
+set_property CONFIG.Write_Depth_A 128 [get_ips blk_mem_counter]
+set_property CONFIG.Read_Width_A 5 [get_ips blk_mem_counter]
+set_property CONFIG.Operating_Mode_A "READ_FIRST" [get_ips blk_mem_counter]
+
+# FIFO for the assert logic
+create_ip -vlnv [latest_ip fifo_generator] -module_name fifo_assert
+set_property CONFIG.Performance_Options "First_Word_Fall_Through" [get_ips fifo_assert]
+set_property CONFIG.Input_Data_Width 8 [get_ips fifo_assert]
+set_property CONFIG.Input_Depth 512 [get_ips fifo_assert]
+set_property CONFIG.Output_Data_Width 8 [get_ips fifo_assert]
+set_property CONFIG.Output_Depth 512 [get_ips fifo_assert]
+set_property CONFIG.Data_Count_Width 9 [get_ips fifo_assert]
+set_property CONFIG.Write_Data_Count_Width 9 [get_ips fifo_assert]
+set_property CONFIG.Read_Data_Count_Width 9 [get_ips fifo_assert]
+
+# FFT for fft_second
+create_ip -vlnv [latest_ip xfft] -module_name xfft_second
+set_property CONFIG.transform_length 16 [get_ips xfft_second]
+set_property CONFIG.input_width 29 [get_ips xfft_second]
+set_property CONFIG.phase_factor_width 16 [get_ips xfft_second]
+set_property CONFIG.scaling_options "unscaled" [get_ips xfft_second]
+set_property CONFIG.rounding_modes "convergent_rounding" [get_ips xfft_second]
+set_property CONFIG.target_clock_frequency 300 [get_ips xfft_second]
+set_property CONFIG.target_data_throughput 300 [get_ips xfft_second]
+set_property CONFIG.xk_index true [get_ips xfft_second]
+
+
+# FIFO for fft_second
+create_ip -vlnv [latest_ip fifo_generator] -module_name fifo_second_index
+set_property CONFIG.Performance_Options {First_Word_Fall_Through} [get_ips fifo_second_index]
+set_property CONFIG.Input_Data_Width 4 [get_ips fifo_second_index]
+set_property CONFIG.Input_Depth 512 [get_ips fifo_second_index]
+set_property CONFIG.Output_Data_Width 4 [get_ips fifo_second_index]
+set_property CONFIG.Output_Depth 512 [get_ips fifo_second_index]
+set_property CONFIG.Data_Count_Width 9 [get_ips fifo_second_index]
+set_property CONFIG.Write_Data_Count_Width 9 [get_ips fifo_second_index]
+set_property CONFIG.Read_Data_Count_Width 9 [get_ips fifo_second_index]
+
+
 
 ################################################ Register XCI files
 # file groups

@@ -13,9 +13,10 @@
         input wire rd_en_first,
         input wire rd_en_second,
         output wire [6:0] index_first,
-        output wire [13:0] freq_first,
+        output wire [13:0] k_first,
         output wire [6:0] index_second,
-        output wire [3:0] freq_second,
+        output wire [3:0] k_second,
+        output wire bypass_second,
 
         output wire [31:0] dout_mon,
         // User ports ends
@@ -90,7 +91,7 @@
     reg                             soft_reset;
 
     /////////////// status registers
-    reg                             bypass_second;
+    reg                             bypass_second_reg;
     assign dout_mon = {dout_second, 2'b00, dout_first};
     
 
@@ -161,7 +162,7 @@
         if ( S_AXI_ARESETN == 1'b0 ) begin
             slv_reg0 <= 0;
             slv_reg1 <= 0;
-            bypass_second <= 0;
+            bypass_second_reg <= 0;
             soft_reset <= 0;
             slv_reg5 <= 0;
             slv_reg6 <= 0;
@@ -182,7 +183,7 @@
                         if ( S_AXI_WDATA[0] == 1 ) begin // software reset
                             soft_reset <= 1;
                         end else begin
-                            bypass_second <= S_AXI_WDATA[1];
+                            bypass_second_reg <= S_AXI_WDATA[1];
                         end
                     end
                 3'h5:
@@ -200,7 +201,7 @@
                 default : begin
                     slv_reg0 <= slv_reg0;
                     slv_reg1 <= slv_reg1;
-                    bypass_second <= bypass_second;
+                    bypass_second_reg <= bypass_second_reg;
                     soft_reset <= 0;
                     slv_reg5 <= slv_reg5;
                     slv_reg6 <= slv_reg6;
@@ -455,10 +456,9 @@
 
     assign sr_dev_edge = (sr_dev_buf_0 == 1) && (sr_dev_buf_1 == 0);
     assign sr_fin = (sr_dev_buf_1 == 1);
-
     assign soft_reset_dev = sr_dev_edge;
-
-    assign user_status = {29'b0, ready_ring, bypass_second, 1'b0};
+    assign bypass_second = bypass_second_reg;
+    assign user_status = {29'b0, ready_ring, bypass_second_reg, 1'b0};
 
 
     ring_rand ring_first(
@@ -489,8 +489,8 @@
         .rand_rd_en(rand_rd_en)
     );
 
-    assign freq_first = dout_first;
-    assign freq_second = dout_second;
+    assign k_first = dout_first;
+    assign k_second = dout_second;
 
     // User logic ends
 
