@@ -126,7 +126,7 @@ module data_store #(
     );
     
     // assert
-    assign assert = cm_din[logD-1:logD-$clog2(ASSERT)] != cm_dout[logD-1:logD-$clog2(ASSERT)];
+    assign assert = (cm_din[logD-1:logD-$clog2(ASSERT)] != cm_dout[logD-1:logD-$clog2(ASSERT)]) && (cm_w_valid);
     assign assert_msb = cm_dout[logD-1:logD-$clog2(ASSERT)];
     assign assert_index = w_index;
 endmodule

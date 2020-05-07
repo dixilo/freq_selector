@@ -8,8 +8,6 @@
     (
         input wire dev_clk,
         input wire dev_rst,
-        input wire rd_en_first,
-        input wire rd_en_second,
         input wire [63:0] data_in,
         input wire [13:0] k_in,
         input wire valid_in,
@@ -67,6 +65,7 @@
     wire [79:0] data_sfft_out;
     wire data_sfft_valid;
     wire data_sfft_last;
+    wire data_sfft_ready;
     wire [6:0] data_sfft_index;
     wire [3:0] k_sfft;
     wire valid_second;
@@ -109,7 +108,8 @@
         .S_AXI_RREADY(s00_axi_rready)
     );
 
-    assign valid_first = (k_in == k_first);
+    assign valid_first = (k_in == k_first) && valid_in;
+    assign rd_en_first = valid_first;
 
     data_store ds_core(
         .clk(dev_clk),
@@ -142,8 +142,8 @@
     );
 
     second_fft sf_core(
-        .clk(clk),
-        .rst(rst),
+        .clk(dev_clk),
+        .rst(dev_rst),
         .data_in(data_out_dt),
         .data_count(data_count_dt),
         .data_index_in(data_index_dt),
@@ -158,10 +158,12 @@
     );
 
     assign rd_en_second = data_sfft_last;
-    assign valid_second = (k_second == k_sfft);
+    assign valid_second = (k_second == k_sfft) && data_sfft_valid;
 
     assign data_out = bypass_second ? data_in : data_sfft_out;
-    assign valid_out = bypass_second ? valid_first : data_sfft_valid;
+    assign valid_out = bypass_second ? valid_first : valid_second;
     assign index_out = bypass_second ? index_first : data_sfft_index;
+
+    assign data_sfft_ready = 1'b1;
 
 endmodule

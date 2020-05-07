@@ -65,9 +65,6 @@ set_property CONFIG.Input_Data_Width 8 [get_ips fifo_assert]
 set_property CONFIG.Input_Depth 512 [get_ips fifo_assert]
 set_property CONFIG.Output_Data_Width 8 [get_ips fifo_assert]
 set_property CONFIG.Output_Depth 512 [get_ips fifo_assert]
-set_property CONFIG.Data_Count_Width 9 [get_ips fifo_assert]
-set_property CONFIG.Write_Data_Count_Width 9 [get_ips fifo_assert]
-set_property CONFIG.Read_Data_Count_Width 9 [get_ips fifo_assert]
 
 # FFT for fft_second
 create_ip -vlnv [latest_ip xfft] -module_name xfft_second
@@ -80,19 +77,13 @@ set_property CONFIG.target_clock_frequency 300 [get_ips xfft_second]
 set_property CONFIG.target_data_throughput 300 [get_ips xfft_second]
 set_property CONFIG.xk_index true [get_ips xfft_second]
 
-
 # FIFO for fft_second
 create_ip -vlnv [latest_ip fifo_generator] -module_name fifo_second_index
 set_property CONFIG.Performance_Options {First_Word_Fall_Through} [get_ips fifo_second_index]
-set_property CONFIG.Input_Data_Width 4 [get_ips fifo_second_index]
+set_property CONFIG.Input_Data_Width 7 [get_ips fifo_second_index]
 set_property CONFIG.Input_Depth 512 [get_ips fifo_second_index]
-set_property CONFIG.Output_Data_Width 4 [get_ips fifo_second_index]
+set_property CONFIG.Output_Data_Width 7 [get_ips fifo_second_index]
 set_property CONFIG.Output_Depth 512 [get_ips fifo_second_index]
-set_property CONFIG.Data_Count_Width 9 [get_ips fifo_second_index]
-set_property CONFIG.Write_Data_Count_Width 9 [get_ips fifo_second_index]
-set_property CONFIG.Read_Data_Count_Width 9 [get_ips fifo_second_index]
-
-
 
 ################################################ Register XCI files
 # file groups
@@ -100,10 +91,26 @@ ipx::add_file ./axi_freq_selector.srcs/sources_1/ip/bram_ring/bram_ring.xci \
 [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
 ipx::add_file ./axi_freq_selector.srcs/sources_1/ip/bram_ring_second/bram_ring_second.xci \
 [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
-
-ipx::reorder_files -before ../axi_freq_selector_core.v \
-./axi_freq_selector.srcs/sources_1/ip/bram_ring/bram_ring.xci \
+ipx::add_file ./axi_freq_selector.srcs/sources_1/ip/blk_mem_data/blk_mem_data.xci \
 [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
+ipx::add_file ./axi_freq_selector.srcs/sources_1/ip/blk_mem_counter/blk_mem_counter.xci \
+[ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
+ipx::add_file ./axi_freq_selector.srcs/sources_1/ip/fifo_assert/fifo_assert.xci \
+[ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
+ipx::add_file ./axi_freq_selector.srcs/sources_1/ip/fifo_second_index/fifo_second_index.xci \
+[ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
+ipx::add_file ./axi_freq_selector.srcs/sources_1/ip/xfft_second/xfft_second.xci \
+[ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
+
+ipx::reorder_files -after ./axi_freq_selector.srcs/sources_1/ip/xfft_second/xfft_second.xci \
+../axi_freq_selector.v \
+[ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
+ipx::reorder_files -before ../axi_freq_selector.v ../second_fft.v [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
+ipx::reorder_files -before ../second_fft.v ../ring_rand_second.v [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
+ipx::reorder_files -after ./axi_freq_selector.srcs/sources_1/ip/xfft_second/xfft_second.xci ../ring_rand.v [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
+ipx::reorder_files -before ../ring_rand.v ../data_transfer.v [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
+ipx::reorder_files -after ./axi_freq_selector.srcs/sources_1/ip/xfft_second/xfft_second.xci ../data_store.v [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
+ipx::reorder_files -before ../axi_freq_selector.v ../axi_freq_selector_core.v [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
 
 # Interface
 ipx::infer_bus_interface dev_clk xilinx.com:signal:clock_rtl:1.0 [ipx::current_core]
