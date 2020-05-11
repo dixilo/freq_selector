@@ -20,6 +20,15 @@ module sim_full(
     reg dev_clk;
     wire [6:0] index_out_0;
     wire valid_out_0;
+    integer fd_plan;
+    integer fd_data;
+    integer fd_k;
+    localparam PLAN_PATH = "./plan_1.bin";
+    localparam DATA_PATH = "./data_1.bin";
+    localparam K_PATH = "./k_1.bin";
+    reg [13:0] k_plan;
+    reg [63:0] data_f;
+    reg [13:0] k_f;
     
     system_wrapper dut(.*);
     
@@ -41,8 +50,21 @@ module sim_full(
         data_in = 0;
         k_in = 0;
         valid_in = 0;
+        k_plan = 0;
         #(STEP_SYS*10);
         reset = 0;
+    endtask
+    
+    task file_open();
+        fd_plan = $fopen(PLAN_PATH, "r");
+        fd_data = $fopen(DATA_PATH, "r");
+        fd_k = $fopen(K_PATH, "r");
+        if ((fd_plan == 0) | (fd_data == 0) | (fd_k == 0)) begin               
+            $display("File Open Error!!!!!");
+            $finish;
+        end else begin
+            $display("File Open OK");
+        end
     endtask
     
     axi_transaction wr_transaction;
@@ -53,6 +75,7 @@ module sim_full(
             clk_gen();
             clk_gen_dev();
             rst_gen();
+            file_open();
         join_none
         
         #(STEP_SYS*100);
@@ -64,8 +87,13 @@ module sim_full(
         
         for (int i=0; i < 128; i++) begin
             wr_transaction.set_write_cmd(0, XIL_AXI_BURST_TYPE_INCR, 0, 0, xil_axi_size_t'(xil_clog2((32)/8)));
-            wr_transaction.set_data_block({i[3:0] , 2'b0, i[13:0]});
+            $fscanf(fd_plan, "%b\n", k_plan);
+            wr_transaction.set_data_block({4'b0 , 2'b0, k_plan});
             vip_agent.wr_driver.send(wr_transaction);
+            if($feof(fd_plan) != 0)begin
+                $display("File End !!");
+                break;
+            end
         end
 
         wr_transaction.set_write_cmd(4, XIL_AXI_BURST_TYPE_INCR, 0, 0, xil_axi_size_t'(xil_clog2((32)/8)));
@@ -84,23 +112,12 @@ module sim_full(
         #(STEP_SYS*100);
 
         wr_transaction.set_write_cmd(16, XIL_AXI_BURST_TYPE_INCR, 0, 0, xil_axi_size_t'(xil_clog2((32)/8)));
-        wr_transaction.set_data_block(32'd1);
+        wr_transaction.set_data_block(32'd2);
         vip_agent.wr_driver.send(wr_transaction);
 
-        for (int i=0; i < 2; i++) begin
-            wr_transaction.set_write_cmd(0, XIL_AXI_BURST_TYPE_INCR, 0, 0, xil_axi_size_t'(xil_clog2((32)/8)));
-            wr_transaction.set_data_block({i[3:0] , 2'b0, i[13:0]});
-            vip_agent.wr_driver.send(wr_transaction);
-        end
-
-        #(STEP_SYS*200)
-        
 
         #(STEP_SYS*100);
         
-
-        #(STEP_SYS*10);
-
 //        wr_transaction.set_write_cmd(16, XIL_AXI_BURST_TYPE_INCR, 0, 0, xil_axi_size_t'(xil_clog2((32)/8)));
 //        wr_transaction.set_data_block(32'd2);
 //        vip_agent.wr_driver.send(wr_transaction);
@@ -111,11 +128,24 @@ module sim_full(
         vip_agent.rd_driver.send(rd_transaction);
 
         #(STEP_SYS*100);
-        for (int i=0; i < 128*64; i++) begin
-            data_in <= {32'b0, i[31:0]};
-            k_in <= i[6:0];
+//        for (int i=0; i < 128*64; i++) begin
+//            data_in <= {32'b0, i[31:0]};
+//            k_in <= i[6:0];
+//            valid_in <= 1;
+//            #(STEP_DEV);
+//        end
+       
+        forever begin
+            $fscanf(fd_data, "%b\n", data_f);
+            $fscanf(fd_k, "%b\n", k_f);
+            data_in <= data_f;
+            k_in <= k_f;
             valid_in <= 1;
             #(STEP_DEV);
+            if($feof(fd_data) != 0)begin
+                $display("File End !!");
+                break;
+            end
         end
        
        #(STEP_SYS*1000);
