@@ -19,6 +19,8 @@
         output wire bypass_second,
 
         output wire [31:0] dout_mon,
+        output wire last_first,
+        output wire last_second,
         // User ports ends
 
         // Global Clock Signal
@@ -471,6 +473,7 @@
         .ready(ready_ring),
         .index(index_first),
         .count(ring_count),
+        .last(last_first),
         // random access
         .rand_rd_addr(rand_rd_addr),
         .rand_rd_en(rand_rd_en),
@@ -485,6 +488,8 @@
         .dout(dout_second),
         .rd_en(rd_en_second),
         .index(index_second),
+        .last(last_second),
+
         .rand_rd_addr(rand_rd_addr),
         .rand_rd_en(rand_rd_en)
     );
@@ -494,4 +499,4 @@
 
     // User logic ends
 
-    endmodule
+endmodule

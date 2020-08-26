@@ -30,6 +30,12 @@ module sim_full(
     reg [63:0] data_f;
     reg [13:0] k_f;
     
+    logic [79:0] m_axis_0_tdata;
+    logic        m_axis_0_tlast;
+    logic        m_axis_0_tready;
+    logic [20:0] m_axis_0_tuser;
+    logic        m_axis_0_tvalid;
+    
     system_wrapper dut(.*);
     
     system_axi_vip_0_0_mst_t  vip_agent;

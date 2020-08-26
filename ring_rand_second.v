@@ -32,6 +32,7 @@ module ring_rand_second(
     output ready,
     output [6:0] index,
     output [7:0] count,
+    output last,
 
     // random access
     input [6:0] rand_rd_addr,
@@ -240,6 +241,7 @@ module ring_rand_second(
         end
     end
 
+    assign last = (read_counter == (ring_counter - 1));
     // bram read address
     assign bram_rd_addr = (rand_cnt == 2'b01)? rand_addr_buf : read_counter;
     
