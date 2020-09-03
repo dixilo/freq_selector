@@ -120,7 +120,7 @@ module ring_rand(
     // Ring counter
     always @(posedge clk) begin
         if (rst) begin
-            ring_counter <= 7'b000000;
+            ring_counter <= 8'b0000_0000;
         end else begin
             if (bram_wr_en) begin
                 ring_counter <= ring_counter + 1;
@@ -233,7 +233,7 @@ module ring_rand(
     // read_counter
     always @(posedge clk) begin
         if (rst | updated) begin
-            read_counter <= 6'b000000;
+            read_counter <= 7'b000_0000;
         end else begin
             if (next) begin
                 read_counter <= (read_counter == (ring_counter - 1))? 0: (read_counter + 1);

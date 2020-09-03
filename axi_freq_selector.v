@@ -23,6 +23,9 @@
         output wire [20:0] m_axis_tuser,
         output wire        m_axis_tlast,
 
+        // Is there one or more tones in this Ch?
+        output wire en,
+
         // Ports of Axi Slave Bus Interface S00_AXI
         input wire  s00_axi_aclk,
         input wire  s00_axi_aresetn,
@@ -96,6 +99,7 @@
         .dout_mon(dout_mon),
         .last_first(last_first),
         .last_second(last_second),
+        .en(en),
 
         .S_AXI_ACLK(s00_axi_aclk),
         .S_AXI_ARESETN(s00_axi_aresetn),

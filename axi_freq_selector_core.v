@@ -21,6 +21,8 @@
         output wire [31:0] dout_mon,
         output wire last_first,
         output wire last_second,
+
+        output wire en,
         // User ports ends
 
         // Global Clock Signal
@@ -95,7 +97,7 @@
     /////////////// status registers
     reg                             bypass_second_reg;
     assign dout_mon = {dout_second, 2'b00, dout_first};
-    
+    assign en = (ring_count != 8'b0000_0000);
 
     //////////////////////////////////////////////// AXI logics
     assign S_AXI_AWREADY    = axi_awready;
