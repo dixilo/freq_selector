@@ -87,29 +87,29 @@ set_property CONFIG.Output_Depth 512 [get_ips fifo_second_index]
 
 ################################################ Register XCI files
 # file groups
-ipx::add_file ./axi_freq_selector.srcs/sources_1/ip/bram_ring/bram_ring.xci \
+ipx::add_file axi_freq_selector.srcs/sources_1/ip/bram_ring/bram_ring.xci \
 [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
-ipx::add_file ./axi_freq_selector.srcs/sources_1/ip/bram_ring_second/bram_ring_second.xci \
+ipx::add_file axi_freq_selector.srcs/sources_1/ip/bram_ring_second/bram_ring_second.xci \
 [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
-ipx::add_file ./axi_freq_selector.srcs/sources_1/ip/blk_mem_data/blk_mem_data.xci \
+ipx::add_file axi_freq_selector.srcs/sources_1/ip/blk_mem_data/blk_mem_data.xci \
 [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
-ipx::add_file ./axi_freq_selector.srcs/sources_1/ip/blk_mem_counter/blk_mem_counter.xci \
+ipx::add_file axi_freq_selector.srcs/sources_1/ip/blk_mem_counter/blk_mem_counter.xci \
 [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
-ipx::add_file ./axi_freq_selector.srcs/sources_1/ip/fifo_assert/fifo_assert.xci \
+ipx::add_file axi_freq_selector.srcs/sources_1/ip/fifo_assert/fifo_assert.xci \
 [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
-ipx::add_file ./axi_freq_selector.srcs/sources_1/ip/fifo_second_index/fifo_second_index.xci \
+ipx::add_file axi_freq_selector.srcs/sources_1/ip/fifo_second_index/fifo_second_index.xci \
 [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
-ipx::add_file ./axi_freq_selector.srcs/sources_1/ip/xfft_second/xfft_second.xci \
+ipx::add_file axi_freq_selector.srcs/sources_1/ip/xfft_second/xfft_second.xci \
 [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
 
-ipx::reorder_files -after ./axi_freq_selector.srcs/sources_1/ip/xfft_second/xfft_second.xci \
+ipx::reorder_files -after axi_freq_selector.srcs/sources_1/ip/xfft_second/xfft_second.xci \
 ../axi_freq_selector.v \
 [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
 ipx::reorder_files -before ../axi_freq_selector.v ../second_fft.v [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
 ipx::reorder_files -before ../second_fft.v ../ring_rand_second.v [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
-ipx::reorder_files -after ./axi_freq_selector.srcs/sources_1/ip/xfft_second/xfft_second.xci ../ring_rand.v [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
+ipx::reorder_files -after axi_freq_selector.srcs/sources_1/ip/xfft_second/xfft_second.xci ../ring_rand.v [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
 ipx::reorder_files -before ../ring_rand.v ../data_transfer.v [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
-ipx::reorder_files -after ./axi_freq_selector.srcs/sources_1/ip/xfft_second/xfft_second.xci ../data_store.v [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
+ipx::reorder_files -after axi_freq_selector.srcs/sources_1/ip/xfft_second/xfft_second.xci ../data_store.v [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
 ipx::reorder_files -before ../axi_freq_selector.v ../axi_freq_selector_core.v [ipx::get_file_groups xilinx_anylanguagesynthesis -of_objects [ipx::current_core]]
 
 # Interface
