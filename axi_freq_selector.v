@@ -11,12 +11,13 @@
         input wire [63:0] data_in,
         input wire [13:0] k_in,
         input wire valid_in,
+        input wire last_in,
 
         output wire [79:0] data_out,
         output wire [6:0] index_out,
         output wire valid_out,
 
-        // AXI stream output
+      // AXI stream output
         output wire [79:0] m_axis_tdata,
         output wire        m_axis_tvalid,
         input  wire        m_axis_tready,
@@ -180,11 +181,12 @@
     assign valid_out = bypass_second ? valid_first : valid_second;
     assign index_out = bypass_second ? index_first : data_sfft_index;
 
+
     assign data_sfft_ready = 1'b1;
 
     assign m_axis_tdata  = bypass_second ? data_in                : data_sfft_out;
     assign m_axis_tvalid = bypass_second ? valid_first            : valid_second;
     assign m_axis_tuser  = bypass_second ? {index_first, k_first} : {data_sfft_index, k_first};
-    assign m_axis_tlast  = bypass_second ? last_first             : last_second;
+    assign m_axis_tlast  = bypass_second ? last_in                : last_second;
 
 endmodule
