@@ -185,7 +185,7 @@
     assign data_sfft_ready = 1'b1;
 
     assign m_axis_tdata  = bypass_second ? data_in                : data_sfft_out;
-    assign m_axis_tvalid = bypass_second ? valid_first            : valid_second;
+    assign m_axis_tvalid = bypass_second ? (valid_first & en)     : (valid_second & en);
     assign m_axis_tuser  = bypass_second ? {index_first, k_first} : {data_sfft_index, k_first};
     assign m_axis_tlast  = bypass_second ? last_in                : last_second;
 
