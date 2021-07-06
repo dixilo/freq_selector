@@ -166,7 +166,7 @@
         if ( S_AXI_ARESETN == 1'b0 ) begin
             slv_reg0 <= 0;
             slv_reg1 <= 0;
-            bypass_second_reg <= 0;
+            bypass_second_reg <= 1;
             soft_reset <= 0;
             slv_reg5 <= 0;
             slv_reg6 <= 0;

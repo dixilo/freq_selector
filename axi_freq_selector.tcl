@@ -114,4 +114,8 @@ ipx::reorder_files -before ../axi_freq_selector.v ../axi_freq_selector_core.v [i
 
 # Interface
 ipx::infer_bus_interface dev_clk xilinx.com:signal:clock_rtl:1.0 [ipx::current_core]
+
+ipx::associate_bus_interfaces -busif m_axis -clock dev_clk [ipx::current_core]
+
+
 ipx::save_core [ipx::current_core]
