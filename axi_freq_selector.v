@@ -8,8 +8,9 @@
     (
         input wire dev_clk,
         input wire dev_rst,
-        input wire [63:0] data_in,
-        input wire [13:0] k_in,
+        input wire [63:0] data_in,// FFT data
+        input wire [13:0] k_in,   // FFT index
+        input wire [31:0] ts_in,  // Timestamp
         input wire valid_in,
         input wire last_in,
 
@@ -21,7 +22,7 @@
         output wire [79:0] m_axis_tdata,
         output wire        m_axis_tvalid,
         input  wire        m_axis_tready,
-        output wire [20:0] m_axis_tuser,
+        output wire [52:0] m_axis_tuser,
         output wire        m_axis_tlast,
 
         // Is there one or more tones in this Ch?
@@ -184,9 +185,9 @@
 
     assign data_sfft_ready = 1'b1;
 
-    assign m_axis_tdata  = bypass_second ? data_in                : data_sfft_out;
-    assign m_axis_tvalid = bypass_second ? (valid_first & en)     : (valid_second & en);
-    assign m_axis_tuser  = bypass_second ? {index_first, k_first} : {data_sfft_index, k_first};
-    assign m_axis_tlast  = bypass_second ? last_in                : last_second;
+    assign m_axis_tdata  = bypass_second ? data_in                       : data_sfft_out;
+    assign m_axis_tvalid = bypass_second ? (valid_first & en)            : (valid_second & en);
+    assign m_axis_tuser  = bypass_second ? {ts_in, index_first, k_first} : {data_sfft_index, k_first};
+    assign m_axis_tlast  = bypass_second ? last_in                       : last_second;
 
 endmodule
